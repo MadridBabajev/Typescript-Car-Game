@@ -2,9 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title1</title>
+    <title>JS Racer</title>
+    <link rel="stylesheet" href="styles/style.css">
 </head>
 <body>
-
+<div class="game-container">
+    <div class="game-area">
+        <div class="road">
+            <div class="startScreen">Press here to start</div>
+        </div>
+    </div>
+    <div class="game-hub">
+        <div id="leader-board" class="hub-stat-main">Leader Board:</div>
+        <hr class="hr-hub" />
+        <div class="hub-current-stats">
+            <div class="hub-stat-main">Current game:</div>
+            <div class="hub-stat">Level: <span id="current-level"></span></div>
+            <div class="hub-stat">Speed: <span id="current-speed"></span></div>
+            <div class="hub-stat">Lives: <span id="current-lives"></span></div>
+            <hr class="hr-hub" />
+            <div class="hub-stat-main hub-stat-main-score">Current score: <span id="current-score">218</span></div>
+        </div>
+    </div>
+</div>
+<script type="module" src="src/app.js"></script>
 </body>
 </html>
