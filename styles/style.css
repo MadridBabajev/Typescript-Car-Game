@@ -5,16 +5,16 @@
 }
 
 :root {
-    --carwidth: 60px;
-    --carheight: 80px;
+    --carwidth: 40px;
+    --carheight: 60px;
     --boxwidth: 40px;
     --boxheight: 40px;
 }
 
 @media (min-width: 780px) {
     :root {
-        --carwidth: 100px;
-        --carheight: 120px;
+        --carwidth: 60px;
+        --carheight: 80px;
         --boxwidth: 60px;
         --boxheight: 60px;
     }
@@ -22,8 +22,8 @@
 
 @media (min-width: 1120px) {
     :root {
-        --carwidth: 120px;
-        --carheight: 140px;
+        --carwidth: 80px;
+        --carheight: 100px;
         --boxwidth: 80px;
         --boxheight: 80px;
     }
@@ -43,7 +43,8 @@
 .game-area {
     width: 50vw;
     height: 100vh;
-    border: red solid 3px;
+    border: black solid 3px;
+    background-color: green;
 }
 
 .startScreen {
@@ -77,12 +78,16 @@
 
 .road {
     height: 100vh;
-    background: #2d3436;
     margin: auto;
     position: relative;
     overflow: hidden;
-    border-right: 7px dashed #c8d6e5;
-    border-left: 7px dashed #c8d6e5;
+}
+
+.road-segment {
+    background: #2d3436;
+    border-left: solid black;
+    border-right: solid black;
+    /*position: absolute;*/
 }
 
 #car, .box {
@@ -93,6 +98,7 @@
     width: var(--carwidth);
     height: var(--carheight);
     bottom: 120px;
+    left: 45%;
     background: url('assets/car.svg') no-repeat;
     background-size: var(--carwidth) var(--carheight);
 }
@@ -126,12 +132,10 @@
     font-size: 1.5rem;
     letter-spacing: 1px;
     margin: 10px 0 5px 25px;
-    /*font-weight: bold;*/
 }
 
 .hr-hub {
     background: black;
     padding: 1px;
     margin-top: 20px;
-    /*width: 100%;*/
 }

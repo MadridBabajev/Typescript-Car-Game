@@ -1,16 +1,22 @@
 
 import { Player } from "./Player.js";
 
-// TODO Make the road random!
-
 class App {
     // Game attributes
     scores = [];
     level = 1;
-    boxCount = 3;
+    boxCount = 2;
     playerMovementSpeed = 2;
     playerLivesPerRound = 2;
     player;
+
+    // Road Segment generation
+    currentLeftOffset = 30;
+    directionChosenSteps = 3;
+    roadGoesRight = true;
+    roadSegments = [];
+    segmentHeight = 5;
+    segmentWidth;
 
     // DOM elements
     gameWasInitialized = false;
@@ -31,22 +37,20 @@ class App {
     };
 
     init() {
-        // Game elements
-        const road = document.querySelector('.road');
-        const carElement = document.createElement("div");
-        carElement.setAttribute("id", "car");
-        road.appendChild(carElement);
-        this.player = new Player(carElement.offsetLeft, carElement.offsetTop,
-            0, this.playerMovementSpeed, this.playerLivesPerRound);
-
         // Set attributes
-        this.carElement = carElement;
-        this.road = road;
+        this.road = document.querySelector('.road');
+        this.carElement = document.createElement("div");
+        this.carElement.setAttribute("id", "car");
+        this.road.appendChild(this.carElement)
         this.startScreen = document.querySelector('.startScreen');
         this.currentLevelSpan = document.getElementById("current-level");
         this.currentSpeedSpan = document.getElementById("current-speed");
         this.currentLivesSpan = document.getElementById("current-lives");
         this.currentScoreSpan = document.getElementById("current-score");
+
+        this.player = new Player(this.carElement.offsetLeft, this.carElement.offsetTop,
+            0, this.playerMovementSpeed, this.playerLivesPerRound);
+
         this.currentScoreSpan.innerHTML = "0";
         this.currentLevelSpan.innerHTML = "1";
         this.currentLivesSpan.innerHTML = `${this.player.livesLeft}`;
@@ -55,9 +59,14 @@ class App {
         // Bind functions to the App instance
         this.gamePlay = this.gamePlay.bind(this);
         this.startNewGame = this.startNewGame.bind(this);
+        this.generateRoad = this.generateRoad.bind(this);
+        this.moveObstacles = this.moveObstacles.bind(this);
+        this.resetBoxAndPlayerPositionAfterCollision = this.resetBoxAndPlayerPositionAfterCollision.bind(this)
         this.keyUp = this.keyUp.bind(this);
         this.keyDown = this.keyDown.bind(this);
 
+        this.setRoadSegmentWidth(this.road.clientWidth)
+        this.generateRoad()
         this.startScreen.addEventListener('click', this.startNewGame);
     }
 
@@ -84,7 +93,62 @@ class App {
         box.y = ((yCoefficient+1) * 350) * -1;
         box.style.top = box.y + "px";
         box.style.left = (Math.floor(Math.random() * this.road.clientWidth)) + "px";
+
         this.road.appendChild(box);
+    }
+
+    generateRoad() {
+        const roadHeight = this.road.clientHeight;
+        const segmentCount = Math.floor(roadHeight / this.segmentHeight);
+
+        for (let i = 0; i < segmentCount; i++) {
+            const segment = document.createElement("div");
+            segment.classList.add("road-segment");
+
+            this.handleCurrentSegmentOffset();
+
+            segment.style.marginLeft = this.currentLeftOffset + "px";
+            segment.style.marginRight =
+                this.road.clientWidth - (this.currentLeftOffset + this.segmentWidth) + "px";
+            segment.style.height = `${this.segmentHeight}px`;
+
+            this.road.appendChild(segment);
+            this.roadSegments.push(segment)
+        }
+    }
+
+    handleCurrentSegmentOffset() {
+        // Move the road left or right
+        if (this.directionChosenSteps !== 0) {
+            if (this.roadGoesRight) {
+                this.currentLeftOffset += 2;
+            } else {
+                this.currentLeftOffset -= 2;
+            }
+            this.directionChosenSteps--;
+        } else {
+            // Gone too far to the right
+            if (this.currentLeftOffset > ((this.road.clientWidth / 5))) {
+                this.roadGoesRight = false
+            } // Gone too far to the left
+            else if (this.currentLeftOffset <= 0) {
+                this.roadGoesRight = true;
+            } else {
+                this.roadGoesRight = Math.random() > 0.5;
+            }
+            this.directionChosenSteps = 3;
+        }
+    }
+
+    setRoadSegmentWidth(areaWidth) {
+        // This is the width of the road (of each segment)
+        if (areaWidth <= 380) {
+            this.segmentWidth = 300;
+        } else if (areaWidth <= 600) {
+            this.segmentWidth = 400;
+        } else {
+            this.segmentWidth = 600;
+        }
     }
 
     gamePlay() {
@@ -94,7 +158,7 @@ class App {
             if(this.keys.ArrowUp && (this.player.yPos > this.road.clientTop + 150)) this.player.yPos -= this.playerMovementSpeed;
             if(this.keys.ArrowDown && (this.player.yPos < this.road.clientHeight - 150)) this.player.yPos += this.playerMovementSpeed;
             if(this.keys.ArrowLeft && (this.player.xPos > 0)) this.player.xPos -= this.playerMovementSpeed;
-            if(this.keys.ArrowRight && (this.player.xPos < this.road.clientWidth - 90)) this.player.xPos += this.playerMovementSpeed;
+            if(this.keys.ArrowRight && (this.player.xPos < this.road.clientWidth - 40)) this.player.xPos += this.playerMovementSpeed;
 
             // Update carElement's position
             this.carElement.style.top = this.player.yPos + "px";
@@ -104,6 +168,7 @@ class App {
             this.updatePlayerScore()
             this.increaseDifficulty(); // check if difficulty needs to be updated and update
             this.moveObstacles() // updated box positions
+            this.checkIfPlayerIsWithinRoadBoundaries(); // check if the player is within the road boundaries
             window.requestAnimationFrame(this.gamePlay); // call this function on the next frame
         }
     }
@@ -116,27 +181,48 @@ class App {
     }
 
     moveObstacles() {
+
+        // Move boxes
         document.querySelectorAll(".box").forEach(box => {
-
-            if (this.onCollision(this.carElement, box)) {
-                if (this.player.livesLeft === 0) this.onGameOver();
-                else {
-                    --this.player.livesLeft;
-                    this.resetBoxStateAfterCollision()
-                }
-            }
-            if (box.y >= 1000) {
-                box.y -= 1000;
-
-                box.style.left = Math.floor(
-                    Math.random() * (Math.floor(Math.random() * this.road.clientWidth))) + "px";
-            }
-            box.y += this.player.speed;
-            box.style.top = box.y + "px";
+            this.handleBoxLogic(box)
         });
+
+        // Move the road up
+        let last = this.road.lastElementChild
+        let first = this.road.firstElementChild
+
+        if (last.classList.contains("road-segment")) {
+            this.handleCurrentSegmentOffset();
+
+            last.style.marginLeft = this.currentLeftOffset + "px";
+            last.style.marginRight =
+                this.road.clientWidth - (this.currentLeftOffset + this.segmentWidth) + "px";
+            last.style.height = `${this.segmentHeight}px`;
+        }
+
+        this.road.replaceChild(last, first);
+        this.road.insertBefore(first, last);
     }
 
-    resetBoxStateAfterCollision() {
+    handleBoxLogic(box) {
+
+        if (this.onCollision(this.carElement, box)) {
+            if (this.player.livesLeft <= 0) this.onGameOver();
+            else {
+                --this.player.livesLeft;
+                this.resetBoxAndPlayerPositionAfterCollision()
+            }
+        }
+        if (box.y >= 1000) {
+            box.y -= 1000;
+
+            box.style.left = Math.floor(Math.random() * this.road.clientWidth) + "px";
+        }
+        box.y += this.player.speed;
+        box.style.top = box.y + "px";
+    }
+
+    resetBoxAndPlayerPositionAfterCollision() {
         let boxCountBeforeCollision = 0;
         document.querySelectorAll(".box").forEach(box => {
             box.remove()
@@ -147,6 +233,8 @@ class App {
             this.createBox(i);
         }
 
+        this.player.xPos = this.road.clientWidth / 2;
+        this.player.yPos = this.road.clientHeight - 180;
     }
 
     onCollision(aObj, bObj){
@@ -155,6 +243,26 @@ class App {
 
         return !((aRect.top > bRect.bottom) || (aRect.bottom < bRect.top) ||
             (aRect.right < bRect.left) || (aRect.left > bRect.right));
+    }
+
+    checkIfPlayerIsWithinRoadBoundaries() {
+        // Get the position of the road segment that is immediately above the player
+        const segmentIndex = Math.floor(this.player.yPos / this.segmentHeight) - 1;
+        const segment = this.roadSegments[segmentIndex];
+
+        // Calculate the left and right boundaries of the road segment
+        const leftBoundary = parseInt(segment.style.marginLeft);// segment.offsetLeft | parseInt(segment.style.marginLeft);
+        const rightBoundary = leftBoundary + this.segmentWidth - 40;
+
+        // Check if the player is outside the boundaries of the road segment
+        if (this.player.xPos <= leftBoundary
+            || this.player.xPos >= rightBoundary) {
+            this.resetBoxAndPlayerPositionAfterCollision();
+            this.player.livesLeft--;
+            this.currentLivesSpan.innerHTML = `${this.player.livesLeft}`;
+
+            if (this.player.livesLeft < 0) this.onGameOver()
+        }
     }
 
     increaseDifficulty() {
@@ -187,6 +295,9 @@ class App {
         this.keys.ArrowUp = false;
         this.keys.ArrowDown = false;
 
+        this.player.xPos = this.road.clientWidth / 2;
+        this.player.yPos = this.road.clientHeight - 180;
+
         this.updateLeaderBoard();
         this.resetStats();
 
@@ -199,17 +310,17 @@ class App {
         leaderBoard.innerHTML = `<div id="leader-board" class="hub-stat-main">Leader Board:</div>`;
         leaderBoard.style.marginLeft = "0";
         // Copy and sort results
-        const resultsSorted = [...this.scores].sort((a,b) => b - a);
+        const resultsSorted = [...this.scores].sort((a, b) => b - a);
 
         // Add best scores to the leaderBoard
         let i = 1;
-        const leaderBoardResult = document.createElement("div");
         resultsSorted.forEach(result => {
             if (i === this.leaderBoardSize) return;
+            const leaderBoardResult = document.createElement("div");
             leaderBoardResult.innerHTML = `<div class="hub-stat">${i++}. ${result}</div>`;
             leaderBoardResult.style.fontWeight = "normal";
             leaderBoard.appendChild(leaderBoardResult);
-        })
+        });
     }
 
     resetStats() {
@@ -218,11 +329,9 @@ class App {
         this.player.currentScore = 0;
         this.level = 1;
         this.boxCount = 3;
-
     }
 
     keyUp(e) {
-
         if (typeof e === "undefined") {
             return;
         }
@@ -233,14 +342,11 @@ class App {
             e.keyCode !== 40) {
             return;
         }
-
         e.preventDefault()
         this.keys[e.key] = false;
-
     }
 
     keyDown(e) {
-
         if (typeof e === "undefined") {
             return;
         }
@@ -251,7 +357,6 @@ class App {
             e.keyCode !== 40) {
             return;
         }
-
         e.preventDefault()
         this.keys[e.key] = true;
     }
