@@ -1,35 +1,36 @@
 
-import { Player } from "./Player.js";
+import { Player } from './Player';
+import '../styles/style.css';
 
 class App {
     // Game attributes
-    scores = [];
-    level = 1;
-    boxCount = 2;
-    playerMovementSpeed = 2;
-    playerLivesPerRound = 2;
-    player;
+    scores: Array<number> = [];
+    level: number = 1;
+    boxCount: number = 3;
+    playerMovementSpeed: number = 2;
+    playerLivesPerRound: number = 2;
+    player?: Player;
 
     // Road Segment generation
-    currentLeftOffset = 30;
-    directionChosenSteps = 3;
-    roadGoesRight = true;
-    roadSegments = [];
-    segmentHeight = 5;
-    segmentWidth;
+    currentLeftOffset: number = 30;
+    directionChosenSteps: number = 3;
+    roadGoesRight: boolean = true;
+    roadSegments: HTMLDivElement[] = [];
+    segmentHeight: number = 5;
+    segmentWidth: number = 0;
 
     // DOM elements
-    gameWasInitialized = false;
-    leaderBoardSize = 4; // Actually 3
-    carElement;
-    road;
-    startScreen;
-    currentScoreSpan;
-    currentLevelSpan;
-    currentLivesSpan;
-    currentSpeedSpan;
+    gameWasInitialized: boolean = false;
+    leaderBoardSize: number = 4; // Actually 3
+    carElement?: HTMLDivElement;
+    road?: HTMLDivElement;
+    startScreen?: HTMLDivElement;
+    currentScoreSpan?: HTMLSpanElement;
+    currentLevelSpan?: HTMLSpanElement;
+    currentLivesSpan?: HTMLSpanElement;
+    currentSpeedSpan?: HTMLSpanElement;
 
-    keys = {
+    keys: { [key: string]: boolean } = {
         ArrowUp: false,
         ArrowDown: false,
         ArrowLeft: false,
@@ -38,23 +39,23 @@ class App {
 
     init() {
         // Set attributes
-        this.road = document.querySelector('.road');
+        this.road = document.querySelector('.road') as HTMLDivElement;
         this.carElement = document.createElement("div");
         this.carElement.setAttribute("id", "car");
-        this.road.appendChild(this.carElement)
-        this.startScreen = document.querySelector('.startScreen');
-        this.currentLevelSpan = document.getElementById("current-level");
-        this.currentSpeedSpan = document.getElementById("current-speed");
-        this.currentLivesSpan = document.getElementById("current-lives");
-        this.currentScoreSpan = document.getElementById("current-score");
+        this.road!.appendChild(this.carElement)
+        this.startScreen = document.querySelector('.startScreen') as HTMLDivElement;
+        this.currentLevelSpan = document.getElementById("current-level") as HTMLSpanElement;
+        this.currentSpeedSpan = document.getElementById("current-speed") as HTMLSpanElement;
+        this.currentLivesSpan = document.getElementById("current-lives") as HTMLSpanElement;
+        this.currentScoreSpan = document.getElementById("current-score") as HTMLSpanElement;
 
         this.player = new Player(this.carElement.offsetLeft, this.carElement.offsetTop,
             0, this.playerMovementSpeed, this.playerLivesPerRound);
 
-        this.currentScoreSpan.innerHTML = "0";
-        this.currentLevelSpan.innerHTML = "1";
-        this.currentLivesSpan.innerHTML = `${this.player.livesLeft}`;
-        this.currentSpeedSpan.innerHTML = `${this.player.speed * 10}`;
+        this.currentScoreSpan!.innerHTML = "0";
+        this.currentLevelSpan!.innerHTML = "1";
+        this.currentLivesSpan!.innerHTML = `${this.player!.livesLeft}`;
+        this.currentSpeedSpan!.innerHTML = `${this.player!.speed * 10}`;
 
         // Bind functions to the App instance
         this.gamePlay = this.gamePlay.bind(this);
@@ -65,13 +66,13 @@ class App {
         this.keyUp = this.keyUp.bind(this);
         this.keyDown = this.keyDown.bind(this);
 
-        this.setRoadSegmentWidth(this.road.clientWidth)
+        this.setRoadSegmentWidth(this.road!.clientWidth)
         this.generateRoad()
-        this.startScreen.addEventListener('click', this.startNewGame);
+        this.startScreen!.addEventListener('click', this.startNewGame);
     }
 
     startNewGame() {
-        this.startScreen.style.display = 'none';
+        this.startScreen!.style.display = 'none';
         this.gameWasInitialized = true;
 
         document.addEventListener('keydown', this.keyDown);
@@ -87,32 +88,31 @@ class App {
         for(let i = 0; i < this.boxCount; i++) { this.createBox(i); }
     }
 
-    createBox(yCoefficient) {
+    createBox(yCoefficient: number) {
         const box = document.createElement('div');
         box.setAttribute('class', 'box');
-        box.y = ((yCoefficient+1) * 350) * -1;
-        box.style.top = box.y + "px";
-        box.style.left = (Math.floor(Math.random() * this.road.clientWidth)) + "px";
+        box.style.top = `${((yCoefficient + 1) * 350) * -1}px`;
+        box.style.left = (Math.floor(Math.random() * this.road!.clientWidth)) + "px";
 
-        this.road.appendChild(box);
+        this.road!.appendChild(box);
     }
 
     generateRoad() {
-        const roadHeight = this.road.clientHeight;
-        const segmentCount = Math.floor(roadHeight / this.segmentHeight);
+        const roadHeight: number = this.road!.clientHeight;
+        const segmentCount: number = Math.floor(roadHeight / this.segmentHeight);
 
         for (let i = 0; i < segmentCount; i++) {
-            const segment = document.createElement("div");
+            const segment: HTMLDivElement = document.createElement("div");
             segment.classList.add("road-segment");
 
             this.handleCurrentSegmentOffset();
 
             segment.style.marginLeft = this.currentLeftOffset + "px";
             segment.style.marginRight =
-                this.road.clientWidth - (this.currentLeftOffset + this.segmentWidth) + "px";
+                this.road!.clientWidth - (this.currentLeftOffset + this.segmentWidth) + "px";
             segment.style.height = `${this.segmentHeight}px`;
 
-            this.road.appendChild(segment);
+            this.road!.appendChild(segment);
             this.roadSegments.push(segment)
         }
     }
@@ -128,7 +128,7 @@ class App {
             this.directionChosenSteps--;
         } else {
             // Gone too far to the right
-            if (this.currentLeftOffset > ((this.road.clientWidth / 5))) {
+            if (this.currentLeftOffset > ((this.road!.clientWidth / 5))) {
                 this.roadGoesRight = false
             } // Gone too far to the left
             else if (this.currentLeftOffset <= 0) {
@@ -140,14 +140,14 @@ class App {
         }
     }
 
-    setRoadSegmentWidth(areaWidth) {
+    setRoadSegmentWidth(areaWidth: number) {
         // This is the width of the road (of each segment)
         if (areaWidth <= 380) {
             this.segmentWidth = 300;
         } else if (areaWidth <= 600) {
             this.segmentWidth = 400;
         } else {
-            this.segmentWidth = 600;
+            this.segmentWidth = 550;
         }
     }
 
@@ -155,14 +155,14 @@ class App {
         if (this.gameWasInitialized) {
 
             // Update player's position
-            if(this.keys.ArrowUp && (this.player.yPos > this.road.clientTop + 150)) this.player.yPos -= this.playerMovementSpeed;
-            if(this.keys.ArrowDown && (this.player.yPos < this.road.clientHeight - 150)) this.player.yPos += this.playerMovementSpeed;
-            if(this.keys.ArrowLeft && (this.player.xPos > 0)) this.player.xPos -= this.playerMovementSpeed;
-            if(this.keys.ArrowRight && (this.player.xPos < this.road.clientWidth - 40)) this.player.xPos += this.playerMovementSpeed;
+            if(this.keys.ArrowUp && (this.player!.yPos > this.road!.clientTop + 150)) this.player!.yPos -= this.playerMovementSpeed;
+            if(this.keys.ArrowDown && (this.player!.yPos < this.road!.clientHeight - 150)) this.player!.yPos += this.playerMovementSpeed;
+            if(this.keys.ArrowLeft && (this.player!.xPos > 0)) this.player!.xPos -= this.playerMovementSpeed;
+            if(this.keys.ArrowRight && (this.player!.xPos < this.road!.clientWidth - 40)) this.player!.xPos += this.playerMovementSpeed;
 
             // Update carElement's position
-            this.carElement.style.top = this.player.yPos + "px";
-            this.carElement.style.left = this.player.xPos + "px";
+            this.carElement!.style.top = this.player!.yPos + "px";
+            this.carElement!.style.left = this.player!.xPos + "px";
 
             // Update game state
             this.updatePlayerScore()
@@ -174,52 +174,54 @@ class App {
     }
 
     updatePlayerScore() {
-        this.player.currentScore++;
-        const ps = this.player.currentScore - 1;
-        this.currentScoreSpan.innerHTML = `${ps}`;
-        this.currentLivesSpan.innerHTML = `${this.player.livesLeft}`;
+        this.player!.currentScore++;
+        const ps = this.player!.currentScore - 1;
+        this.currentScoreSpan!.innerHTML = `${ps}`;
+        this.currentLivesSpan!.innerHTML = `${this.player!.livesLeft}`;
     }
 
     moveObstacles() {
 
         // Move boxes
         document.querySelectorAll(".box").forEach(box => {
-            this.handleBoxLogic(box)
+            this.handleBoxLogic(box as HTMLDivElement)
         });
 
         // Move the road up
-        let last = this.road.lastElementChild
-        let first = this.road.firstElementChild
+        let last: HTMLDivElement = this.road!.lastElementChild as HTMLDivElement;
+        let first: HTMLDivElement = this.road!.firstElementChild as HTMLDivElement;
 
-        if (last.classList.contains("road-segment")) {
+        if (last!.classList.contains("road-segment")) {
             this.handleCurrentSegmentOffset();
 
-            last.style.marginLeft = this.currentLeftOffset + "px";
-            last.style.marginRight =
-                this.road.clientWidth - (this.currentLeftOffset + this.segmentWidth) + "px";
+            last!.style.marginLeft = this.currentLeftOffset + "px";
+            last!.style.marginRight =
+                this.road!.clientWidth - (this.currentLeftOffset + this.segmentWidth) + "px";
             last.style.height = `${this.segmentHeight}px`;
         }
 
-        this.road.replaceChild(last, first);
-        this.road.insertBefore(first, last);
+        this.road!.replaceChild(last, first);
+        this.road!.insertBefore(first, last);
     }
 
-    handleBoxLogic(box) {
+    handleBoxLogic(box: HTMLDivElement) {
 
-        if (this.onCollision(this.carElement, box)) {
-            if (this.player.livesLeft <= 0) this.onGameOver();
+        if (this.onCollision(this.carElement!, box)) {
+            if (this.player!.livesLeft <= 0) this.onGameOver();
             else {
-                --this.player.livesLeft;
+                --this.player!.livesLeft;
                 this.resetBoxAndPlayerPositionAfterCollision()
             }
         }
-        if (box.y >= 1000) {
-            box.y -= 1000;
 
-            box.style.left = Math.floor(Math.random() * this.road.clientWidth) + "px";
+        const boxY: number = box.style.top.length > 0 ?
+            parseInt(box.style.top) + this.player!.speed : -1000;
+        box.style.top = `${boxY}px`;
+        if (boxY >= this.road!.clientHeight) {
+            box.style.top = `${-1000}px`;
+            box.style.left = Math.floor(Math.random() * this.road!.clientWidth) + "px";
         }
-        box.y += this.player.speed;
-        box.style.top = box.y + "px";
+
     }
 
     resetBoxAndPlayerPositionAfterCollision() {
@@ -233,11 +235,11 @@ class App {
             this.createBox(i);
         }
 
-        this.player.xPos = this.road.clientWidth / 2;
-        this.player.yPos = this.road.clientHeight - 180;
+        this.player!.xPos = this.road!.clientWidth / 2;
+        this.player!.yPos = this.road!.clientHeight - 180;
     }
 
-    onCollision(aObj, bObj){
+    onCollision(aObj: HTMLDivElement, bObj: HTMLDivElement){
         const aRect = aObj.getBoundingClientRect();
         const bRect = bObj.getBoundingClientRect();
 
@@ -247,7 +249,7 @@ class App {
 
     checkIfPlayerIsWithinRoadBoundaries() {
         // Get the position of the road segment that is immediately above the player
-        const segmentIndex = Math.floor(this.player.yPos / this.segmentHeight) - 1;
+        const segmentIndex = Math.floor(this.player!.yPos / this.segmentHeight) - 1;
         const segment = this.roadSegments[segmentIndex];
 
         // Calculate the left and right boundaries of the road segment
@@ -255,35 +257,35 @@ class App {
         const rightBoundary = leftBoundary + this.segmentWidth - 40;
 
         // Check if the player is outside the boundaries of the road segment
-        if (this.player.xPos <= leftBoundary
-            || this.player.xPos >= rightBoundary) {
+        if (this.player!.xPos <= leftBoundary
+            || this.player!.xPos >= rightBoundary) {
             this.resetBoxAndPlayerPositionAfterCollision();
-            this.player.livesLeft--;
-            this.currentLivesSpan.innerHTML = `${this.player.livesLeft}`;
+            this.player!.livesLeft--;
+            this.currentLivesSpan!.innerHTML = `${this.player!.livesLeft}`;
 
-            if (this.player.livesLeft < 0) this.onGameOver()
+            if (this.player!.livesLeft < 0) this.onGameOver()
         }
     }
 
     increaseDifficulty() {
-        if (this.player.currentScore >= 1000 && this.level === 1 ||
-            this.player.currentScore >= 2000 && this.level === 2 ||
-            this.player.currentScore >= 3000 && this.level === 3 ||
-            this.player.currentScore >= 4000 && this.level === 4) {
+        if (this.player!.currentScore >= 1000 && this.level === 1 ||
+            this.player!.currentScore >= 2000 && this.level === 2 ||
+            this.player!.currentScore >= 3000 && this.level === 3 ||
+            this.player!.currentScore >= 4000 && this.level === 4) {
 
-            this.player.speed += 0.5;
+            this.player!.speed += 0.5;
             this.level++;
             if (this.level === 2 || this.level === 4) {
                 this.createBox(2);
             }
-            this.currentLevelSpan.innerHTML = `${this.level}`;
-            this.currentSpeedSpan.innerHTML = `${this.player.speed * 10}`;
+            this.currentLevelSpan!.innerHTML = `${this.level}`;
+            this.currentSpeedSpan!.innerHTML = `${this.player!.speed * 10}`;
         }
     }
 
     onGameOver() {
-        this.startScreen.innerHTML = `Game over! Your final score is <strong>${this.player.currentScore}</strong><br>Press here to start a new game`;
-        this.scores.push(this.player.currentScore);
+        this.startScreen!.innerHTML = `Game over! Your final score is <strong>${this.player!.currentScore}</strong><br>Press here to start a new game`;
+        this.scores.push(this.player!.currentScore);
 
         // Reset game initialization flag and remove event listeners
         this.gameWasInitialized = false;
@@ -295,20 +297,20 @@ class App {
         this.keys.ArrowUp = false;
         this.keys.ArrowDown = false;
 
-        this.player.xPos = this.road.clientWidth / 2;
-        this.player.yPos = this.road.clientHeight - 180;
+        this.player!.xPos = this.road!.clientWidth / 2;
+        this.player!.yPos = this.road!.clientHeight - 180;
 
         this.updateLeaderBoard();
         this.resetStats();
 
-        this.startScreen.style.display = "block";
+        this.startScreen!.style.display = "block";
     }
 
     updateLeaderBoard() {
         // Remove all scores from the leaderBoard
-        const leaderBoard = document.getElementById("leader-board");
-        leaderBoard.innerHTML = `<div id="leader-board" class="hub-stat-main">Leader Board:</div>`;
-        leaderBoard.style.marginLeft = "0";
+        const leaderBoard: HTMLDivElement = document.getElementById("leader-board") as HTMLDivElement;
+        leaderBoard!.innerHTML = `<div id="leader-board" class="hub-stat-main">Leader Board:</div>`;
+        leaderBoard!.style.marginLeft = "0";
         // Copy and sort results
         const resultsSorted = [...this.scores].sort((a, b) => b - a);
 
@@ -324,37 +326,37 @@ class App {
     }
 
     resetStats() {
-        this.player.speed = this.playerMovementSpeed;
-        this.player.livesLeft = this.playerLivesPerRound;
-        this.player.currentScore = 0;
+        this.player!.speed = this.playerMovementSpeed;
+        this.player!.livesLeft = this.playerLivesPerRound;
+        this.player!.currentScore = 0;
         this.level = 1;
         this.boxCount = 3;
     }
 
-    keyUp(e) {
+    keyUp(e: KeyboardEvent) {
         if (typeof e === "undefined") {
             return;
         }
 
-        if (e.keyCode !== 37 &&
-            e.keyCode !== 38 &&
-            e.keyCode !== 39 &&
-            e.keyCode !== 40) {
+        if (e.key !== 'ArrowUp' &&
+            e.key !== 'ArrowLeft' &&
+            e.key !== 'ArrowDown' &&
+            e.key !== 'ArrowRight') {
             return;
         }
         e.preventDefault()
         this.keys[e.key] = false;
     }
 
-    keyDown(e) {
+    keyDown(e: KeyboardEvent) {
         if (typeof e === "undefined") {
             return;
         }
 
-        if (e.keyCode !== 37 &&
-            e.keyCode !== 38 &&
-            e.keyCode !== 39 &&
-            e.keyCode !== 40) {
+        if (e.key !== 'ArrowUp' &&
+            e.key !== 'ArrowLeft' &&
+            e.key !== 'ArrowDown' &&
+            e.key !== 'ArrowRight') {
             return;
         }
         e.preventDefault()
@@ -362,5 +364,5 @@ class App {
     }
 }
 
-const app = new App();
+const app: App = new App();
 app.init();
